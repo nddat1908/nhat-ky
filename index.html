@@ -4,10 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Thư Tay & Giai Điệu - Nhật Ký Kỷ Niệm</title>
-    <!-- Tailwind CSS CDN (static site / GitHub Pages) -->
+    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
     <!-- Google Fonts: Playfair Display & Dancing Script & Be Vietnam Pro -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -306,9 +306,7 @@
         // Khởi tạo ứng dụng
         document.addEventListener('DOMContentLoaded', () => {
             loadLetters();
-            if (window.lucide && typeof window.lucide.createIcons === 'function') {
-                lucide.createIcons();
-            }
+            lucide.createIcons();
 
             // Tìm kiếm trực tiếp
             document.getElementById('searchInput').addEventListener('input', (e) => {
@@ -319,42 +317,17 @@
         // Tải danh sách thư từ LocalStorage
         function loadLetters() {
             const saved = localStorage.getItem('my_letter_journal');
-
             if (saved) {
-                try {
-                    const parsed = JSON.parse(saved);
-                    letters = Array.isArray(parsed) ? parsed : [...defaultLetters];
-                } catch (error) {
-                    console.warn('Dữ liệu lưu cũ không hợp lệ, khôi phục dữ liệu mẫu.', error);
-                    letters = [...defaultLetters];
-                    saveToLocalStorage();
-                }
+                letters = JSON.parse(saved);
             } else {
-                letters = [...defaultLetters];
+                letters = defaultLetters;
                 saveToLocalStorage();
             }
-
             renderLetters();
         }
 
         function saveToLocalStorage() {
-            try {
-                localStorage.setItem('my_letter_journal', JSON.stringify(letters));
-            } catch (error) {
-                console.error('Không thể lưu dữ liệu vào trình duyệt:', error);
-                alert('Không thể lưu dữ liệu. Ảnh có thể quá lớn hoặc bộ nhớ trình duyệt đã đầy.');
-            }
-        }
-
-        // Chống lỗi HTML khi người dùng nhập nội dung vào bức thư
-        function escapeHTML(value) {
-            return String(value ?? '').replace(/[&<>"']/g, char => ({
-                '&': '&amp;',
-                '<': '&lt;',
-                '>': '&gt;',
-                '"': '&quot;',
-                "'": '&#039;'
-            }[char]));
+            localStorage.setItem('my_letter_journal', JSON.stringify(letters));
         }
 
         // Đổ danh sách thư ra giao diện
@@ -364,9 +337,9 @@
             grid.innerHTML = '';
 
             const filtered = letters.filter(l => 
-                String(l.title || '').toLowerCase().includes(filterText.toLowerCase()) || 
-                String(l.content || '').toLowerCase().includes(filterText.toLowerCase()) ||
-                String(l.recipient || '').toLowerCase().includes(filterText.toLowerCase())
+                l.title.toLowerCase().includes(filterText.toLowerCase()) || 
+                l.content.toLowerCase().includes(filterText.toLowerCase()) ||
+                l.recipient.toLowerCase().includes(filterText.toLowerCase())
             );
 
             if (filtered.length === 0) {
@@ -384,15 +357,15 @@
                     card.innerHTML = `
                         <div>
                             <div class="flex justify-between items-start mb-3">
-                                <span class="text-[11px] font-mono text-amber-800/70 bg-amber-100/60 px-2 py-0.5 rounded-full">${escapeHTML(letter.date)}</span>
+                                <span class="text-[11px] font-mono text-amber-800/70 bg-amber-100/60 px-2 py-0.5 rounded-full">${letter.date}</span>
                                 <div class="flex items-center gap-1.5">
                                     ${hasImage}
                                     ${hasMusic}
                                 </div>
                             </div>
-                            <h4 class="font-handwriting text-lg font-bold text-amber-900 mb-1 line-clamp-1">${escapeHTML(letter.recipient)}</h4>
-                            <h3 class="font-serif-title font-bold text-stone-800 text-base mb-2 line-clamp-1">${escapeHTML(letter.title)}</h3>
-                            <p class="text-xs text-stone-600 line-clamp-3 leading-relaxed mb-4">${escapeHTML(letter.content)}</p>
+                            <h4 class="font-handwriting text-lg font-bold text-amber-900 mb-1 line-clamp-1">${letter.recipient}</h4>
+                            <h3 class="font-serif-title font-bold text-stone-800 text-base mb-2 line-clamp-1">${letter.title}</h3>
+                            <p class="text-xs text-stone-600 line-clamp-3 leading-relaxed mb-4">${letter.content}</p>
                         </div>
                         ${letter.image ? `
                             <div class="w-full h-28 mb-3 rounded-md overflow-hidden border border-amber-200/60">
@@ -407,9 +380,7 @@
                     grid.appendChild(card);
                 });
             }
-            if (window.lucide && typeof window.lucide.createIcons === 'function') {
-                lucide.createIcons();
-            }
+            lucide.createIcons();
         }
 
         // Xử lý chọn ảnh từ File
@@ -430,20 +401,9 @@
         function handleImageUrlInput() {
             const url = document.getElementById('imageUrlInput').value.trim();
             if (url) {
-                try {
-                    const parsed = new URL(url);
-                    if (!['http:', 'https:'].includes(parsed.protocol)) {
-                        throw new Error('URL không hợp lệ');
-                    }
-                    selectedImageBase64 = url;
-                    document.getElementById('imageFileInput').value = '';
-                    showImagePreview(url);
-                } catch (error) {
-                    selectedImageBase64 = null;
-                    document.getElementById('imageUrlInput').value = '';
-                    document.getElementById('imagePreviewContainer').classList.add('hidden');
-                    alert('Vui lòng nhập URL ảnh hợp lệ bắt đầu bằng http:// hoặc https://');
-                }
+                selectedImageBase64 = url;
+                document.getElementById('imageFileInput').value = '';
+                showImagePreview(url);
             } else {
                 removeSelectedImage();
             }
@@ -626,9 +586,7 @@
                 isPlaying = true;
                 playIcon.setAttribute('data-lucide', 'pause');
                 vinyl.classList.add('animate-spin-slow');
-                if (window.lucide && typeof window.lucide.createIcons === 'function') {
-                    lucide.createIcons();
-                }
+                lucide.createIcons();
             }).catch(err => {
                 alert('Không thể phát file nhạc này. Vui lòng kiểm tra lại đường dẫn MP3.');
             });
@@ -643,9 +601,7 @@
             isPlaying = false;
             if (playIcon) playIcon.setAttribute('data-lucide', 'play');
             if (vinyl) vinyl.classList.remove('animate-spin-slow');
-            if (window.lucide && typeof window.lucide.createIcons === 'function') {
-                lucide.createIcons();
-            }
+            lucide.createIcons();
         }
 
         function onAudioEnded() {
